@@ -1,0 +1,208 @@
+=============================1. 서버=============================
+AWS EC2 Cloud Compute - free tier
+Amazon Linux 2 AMI
+Python 3.7
+
+pip dependencies ( 설치방법 : #pip install flask )
+flask
+flask_restful
+schedule
+pyotp
+pyfcm
+smtplib
+mariadb
+
+main execution file : projectNam.py
+
+실행 명령어
+$python3 projectNam.py
+
+백그라운드 실행 명령어 : SSH 원격 접속이 종료되어도 프로그램이 계속 실행되며, nohup.out이라는 파일에 로그가 저장된다.
+$nohup python3 projectNam.py
+
+유의사항
+Firebase Cloud Messaging Service API Key : manageFCM.py에 하드코딩
+google Email 계정 정보 : manageEmail.py에 하드코딩
+Datebase 계정 : manageDB.py에 하드코딩
+API 추가 시 : projectNam.py에 추가. 새 .py파일일 경우 from [파일명.py] import * 추가
+
+
+
+서버 측 mariaDB 데이터베이스 테이블 정보
+database:projectnam
+	table:admin	// 관리자의 계정 정보 저장 테이블
+		col:id		type:VARCHAR length:16 PRIMARY KEY	//관리자의 아이디
+		col:pw		type:MEDIUMTEXT		//관리자의 패스워드 password 함수로 암호화
+		col:email		type:VARCHAR length:32	//관리자의 이메일 주소
+		col:otpkey	type:MEDIUMTEXT		//관리자의 OTP Key  32진수 SHA-1 암호화 키
+		col:token		type:MEDIUMTEXT		//관리자 앱 로그인 세션 인증 토큰
+		col:status		type:VARCHAR length:10	//관리자 계정 상태
+		col:verifyingcode	type:TEXT		//관리자 앱 이메일 인증 코드 및 인증상태
+		col:expiretime	type:TEXT		//관리자 앱 이메일 인증 코드 만료시간
+		lockername	type:VARCHAR length:32	//관리자 담당 사물함 이름
+	table:client	// 사용자의 계정 정보 저장 테이블
+		col:name		type:MEDIUMTEXT		//사용자의 이름
+		col:email		type:MEDIUMTEXT		//사용자의 이메일 주소
+		col:id		type:VARCHAR length:50 PRIMARY KEY	//사용자의 아이디
+		col:pw		type:MEDIUMTEXT		//사용자의 패스워드 password 함수로 암호화
+		col:status		type:MEDIUMTEXT		//사용자의 예약 상태
+		col:otpkey	type:MEDIUMTEXT		//사용자의 OTP Key
+		col:token		type:MEDIUMTEXT		//사용자 앱 로그인 세션 인증 토큰
+		col:verifyingcode	type:TEXT		//사용자 앱 이메일 인증 코드 및 인증상태
+		col:expiretime	type:TEXT		//사용자 앱 이메일 인증 코드 만료시간
+		col:startdate	type:DATE		//사물함 대여 시작 날짜
+		col:enddate	type:DATE		//사물함 대여 종료 날짜
+		col:usinglockername type:TEXT		//사용중인 사물함 이름
+	table:firebasetoken	//푸시 알림을 보내기 위한 계정별 firebase token 저장 테이블
+		col:id		type:VARCHAR length:20 PRIMARY KEY	//계정 아이디
+		col:token		type:TEXT		//firebase token
+	table:lockers	//각 사물함의 정보 저장 테이블
+		col:lockername	type:MEDIUMTEXT		//사물함 이름
+		col:location	type:MEDIUMTEXT		//사물함이 위치한 주소
+		col:ip		type:MEDIUMTEXT		//사물함이 접속된 IP 주소
+		col:otpKey	type:MEDIUMTEXT		//사물함 자체 인증용 OTP Key
+		col:maxspaces	type:INT length:11		//사물함 최대 보관함 개수
+		col:usedspaces	type:INT length:11		//현재 사용 중인 보관함+현재 예약 상태 개수
+		col:signedID	type:TEXT		//사물함에 현재 로그인 중인 계정 아이디
+		col:status		type:TEXT		//로그인 인증 상황
+		col:lockercode	type:VARCHAR length:64 PRIMARY KEY	//관리의 사물함 등록 위한 고유 코드
+	table:[사물함 이름]	//해당 사물함의 예약 현황을 저장할 테이블. 새로운 사물함이 등록될 때마다 사물함 이름으로 생성됨
+		col:num		type:INT length:11 PRIMARY KEY		//예약 고유번호
+		col:status		type:INT length:11		//연체 상태
+		col:clientid	type:TEXT		//예약자 아이디
+		col:reserveddate	type:DATE		//예약 날짜
+		col:lockernum	type:INT			//할당된 사물함 번호
+	table:notice	//공지사항 저장 테이블
+		col:num		type:INT length:11 PRIMARY KEY		//공지사항 고유 번호
+		col:title		type:MEDIUMTEXT		//공지사항 제목
+		col:date		type:MEDIUMTEXT		//공지사항 작성시간
+		col:body		type:MEDIUMTEXT		//공지사항 내용
+	table:illegal_open_log	//사물함의 도난 경보 이력 저장 테이블
+		col:num		type:INT length:11 PRIMARY KEY		//도난 이력 고유 번호
+		col:lockername	type:VARCHAR length:32	//도난이 발생한 사물함 이름
+		col:lockernum	type:INT length:11		//도난이 발생한 사물함 번호
+		col:time		type:DATETIME		//도난이 발생한 시간
+	table:overdue_log		//연체 사물함 이력 저장 테이블
+		col:num		type:INT length:11 PRIMARY KEY		//연체 발생 고유 번호
+		col:name		type:VARCHAR length:16	//연체 사용자 이름
+		col:id		type:VARCHAR length:16	//연체 사용자 아이디
+		col:email		type:TINYTEXT		//연체 사용자 이메일
+		col:lockername	type:TEXT		//연체된 사물함 이름
+		col:lockernum	type:INT length:11		//연체된 사물함 번호
+		col:startdate	type:DATE		//예약했던 사용 시작 날짜
+		col:enddate	typeDATE		//예약했던 사용 종료 날짜
+		col:iscollected	type:VARCHAR length:5	//관리자의 물품 회수 여부
+		col:returntime	type:DATETIME		//사용자에게 물품 반환 여부. NULL일 경우 미반환
+	
+
+
+
+=============================2. 사물함=============================
+Raspberry Pi 4B
+Python 3.7
+
+pip dependencies ( 설치방법 : Thonny Python IDE의 [Tools]-[Manage Packages] 메뉴에서 검색하여 설치 )
+pyotp
+RPI.GPIO
+mariadb
+
+main execution file : CallClassLogin.py : 라즈베리파이 시작 프로그램으로 등록해야 함
+#sudo nano /etc/xdg/lxsession/LXDE-pi/autostart       여기에 다음 코드를 추가
+	@/usr/bin/python3.7 /...[파일 경로].../CallClassLogin.py
+라즈베리파이가 부팅되면 자동으로 프로그램이 실행되고 서버와의 통신을 성공할때까지 반복 시도하여 성공했을 경우 GUI가 나타나 서비스가 시작됨.
+
+유의사항
+서버 IP 주소 : restApi.py API_HOST 변수에 하드코딩
+Database 계정 : manageDB.py에 하드코딩
+사물함 자체 정보 : 사물함 측 mariaDB에 저장. 다른 사물함 제작 및 설치 시 변경 필요
+
+
+사물함 측 mariaDB 데이터베이스 테이블 정보
+database:projectnam 
+	table:locker_info	//해당 사물함의 정보 저장 테이블
+		col:lockername	type:TEXT		//사물함 이름
+		col:location	type:TEXT		//사물함 위치 주소
+		col:maxspaces	type:INT length:11		//사물함의 최대 보관함 개수
+		col:otpkey	type:TEXT		//사물함 자체 인증용 OTP Key
+		col:isNeverConnected type:INT length:11	//사물함 최초 서버 연결 여부
+
+============================3.사용자/관리자 앱================================
+Android Studio java
+CompileOption JavaVersion.VERSION_1_8
+compileSdk 32
+minSdk 29
+targetSdk 32
+
+유의사항
+서버 IP 주소 : CallRestApi.java에 하드코딩
+
+build.gradle dependencies
+implementation 'com.google.firebase:firebase-messaging:21.0.1   -> 버전 준수
+
+AndroidManifest 퍼미션 부여
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.NFC" />
+
+
+
+============================================4. 기능 정리======================================
+회원가입/로그인
+	사용자는 이름, 이메일, 아이디, 비밀번호 정보를 이용해 회원가입
+	관리자는 이메일, 아이디, 비밀번호, 사물함 코드를 이용해 회원가입
+	회원가입 시 알림 이메일 전송
+	사용자 앱에는 자동 로그인 기능 탑재
+	토큰 이용한 중복 로그인 방지, 로그인 세션 인증
+사물함 예약
+	앱
+		단기/장기 예약 - 당일 예약은 불가능
+		예약이 꽉 찬 날짜가 포함되면 예약 불가능
+		예약 취소
+		예약 정보 확인
+		연체 알림
+	사물함
+		단기 예약 - 당일 사용만 가능
+사물함 관리
+	관리자는 자신이 담당한 사물함의 각 보관함별 상태를 확인할 수 있음. 만약 이용중이라면 누가 얼마나 대여했는지 확인 가능
+연체
+	서버에서는 매일 00시 10분, 또는 서버가 부팅되었을 때마다 이용 기간을 초과한 사물함이 있는지 검사하고 관리자에게 연체 사물함의 존재를 푸시 알림으로 보고함
+	관리자는 연체 사물함 내역을 보고 사용자의 물건을 회수 처리하고 돌려줄 때 반환 처리를 할 수 있음. 연체 내역은 영구 저장됨.
+	이용기간을 초과한 사용자에게는 매일 08시 00분에 푸시 알림을 전송
+사물함
+	사용자가 아이디, 암호와 OTP 인증을 통해 로그인하면 현재 상태에 따라 알맞는 화면이 나타남
+	1. 예약하지 않음(당일 사용만 가능)  2. 예약기간 전(사용 시작 불가능) 3. 예약기간임(사용 시작 가능) 4. 이용중(추가 보관, 사용 종료 가능) 5. 연체됨(관리자에게 문의하여 물건을 반환받아야 함)
+	관리자는 사물함에서 로그인하여 각 보관함을 강제개방할 수 있음
+	사물함 문을 열고 다시 닫으면 3초 후 자동으로 잠김. 만약 문이 열렸는데 1분동안 열지 않으면 자동으로 잠김
+OTP
+	사물함 이용을 위해 관리자와 사용자 모두 OTP 인증 필요
+	OTP Key는 회원가입 시 발급되어 서버DB와 기기에 저장됨. 이후 타 기기에서 로그인 시 새로 발급받아야 사용가능
+	TOTP는 RFC6238 알고리즘 적용
+내 정보 수정
+	관리자, 사용자 모두 이메일로 본인인증 후 다음과 같은 기능을 수행할 수 있음.
+		1. 비밀번호 변경  2. OTP Key 재발급  3. 계정 탈퇴
+공지사항
+	공지사항을 열람할 수 있음
+	관리자는 공지사항을 작성하거나 삭제할 수 있음. 공지사항 작성 시 푸시 알림 여부를 설정하여 사용자/관리자들에게 푸시 알림을 전송할지 선택 가능
+도난 경보
+	사물함이 잠겨 있는 상태에서 문의 개방이 감지되면 해당 사물함의 관리자들에게 어떤 사물함이 불법 개방되었는지 푸시 알림을 전송함. DB에 발생 시간과 함께 영구 저장됨.
+	사물함 관리 메뉴 하단의 도난 경보 발생 이력을 통해 모든 도난 경보 발생 이력을 확인할 수 있음.
+
+이메일이 전송되는 시점
+ 1. 회원가입 2. 이메일 본인인증 3. 회원 탈퇴 4. 암호 변경
+사용자 또는 관리자용 앱에 푸시 알림이 전송되는 시점
+ 1. 푸시 알림 설정된 공지사항 게시 2. 연체 사물함 발생 시 사용자에게 알림 3. 연체 사물함 중 물건을 회수하지 않은 사물함 존재 시 관리자에게 알림 4. 도난 경보 발생 시 관리자에게 알림
+
+
+===============================================5.사용 부품 목록================================================
+Raspberry Pi 4B 8GB
+라즈베리파이용 10.1인치 IPS 터치스크린 디스플레이
+MG996R 서보모터 X 4
+마그네틱 센서 X 4
+점퍼 케이블
+브레드보드
+내열 절연 전선
+대원시안보드
+나사
+1.5V AA 건전지 X 16
+AA 건전지 4개 홀더 X 4
+2구 멀티탭
+3D 프린터 인쇄 모형들
