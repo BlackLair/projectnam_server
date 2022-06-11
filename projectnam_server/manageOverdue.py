@@ -26,10 +26,24 @@ def setUsedspaces():
 		manageDB.conn.commit()
 	print('setting usedspaces done.')
 
+def delete_neverused_reservation():
+	sql="SELECT id, usinglockername FROM client WHERE status='reserved' AND UNIX_TIMESTAMP(CAST(enddate AS DATE)) <= UNIX_TIMESTAMP(CAST(NOW()-INTERVAL 1 DAY AS DATE));"
+	manageDB.cur.execute(sql)
+	row=manageDB.cur.fetchall()
+	row_length=len(row)
+	for i in range(row_length):
+		sql="DELETE FROM "+row[i][1]+" WHERE clientid='"+row[i][0]+"';"
+		manageDB.cur.execute(sql)
+		manageDB.conn.commit()
+		sql="UPDATE client SET status='idle', startdate=NULL, enddate=NULL, usinglockername=NULL WHERE id='"+row[i][0]+"';"
+		manageDB.cur.execute(sql)
+		manageDB.conn.commit()
+
 
 def checkOverdue():
+	delete_neverused_reservation()
 	print('Beginning of check overdue...')
-	sql="SELECT id, usinglockername FROM client WHERE UNIX_TIMESTAMP(CAST(enddate AS DATE)) <= UNIX_TIMESTAMP(CAST(NOW()-INTERVAL 1 DAY AS DATE));"
+	sql="SELECT id, usinglockername FROM client WHERE status!='reserved' AND UNIX_TIMESTAMP(CAST(enddate AS DATE)) <= UNIX_TIMESTAMP(CAST(NOW()-INTERVAL 1 DAY AS DATE));"
 	manageDB.cur.execute(sql)
 	row=manageDB.cur.fetchall()
 	row_length=len(row)
