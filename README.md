@@ -21,8 +21,11 @@
 
 폴더 설명
 Projectnam	: 안드로이드 스튜디오 프로젝트 - 사용자용 앱
+
 Projectnam_admin	: 안드로이드 스튜디오 프로젝트 - 관리자용 앱
+
 projectnam_locker	: 파이썬 소스코드 - 사물함 키오스크 앱
+
 projectnam_server	: 파이썬 소스코드 - flask 서버 앱
 
 사용절차 및 패키지 의존성과 구축해야 할 DB는 별첨문서를 확인해주세요.
