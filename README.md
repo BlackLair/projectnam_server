@@ -29,3 +29,8 @@
 보안을 위해 소스코드 내 IP주소와 API Key 등을 제거하였습니다. 별첨문서의 각 항목 유의사항을 확인해주세요.
 
 사용절차 및 패키지 의존성과 구축해야 할 DB는 별첨문서를 확인해주세요.
+
+
+
+발표 리허설 영상 
+https://drive.google.com/file/d/1E-wqj19_ZZWji5HF6jilRyzgas6qaMVe/view?usp=drive_link
