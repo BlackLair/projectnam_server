@@ -20,9 +20,8 @@
 
 
 
+![프작남](https://github.com/BlackLair/projectnam_server/assets/80610197/d43a7df5-75bc-4994-9e7f-e9cf8a0c9e1a)
 
-![KakaoTalk_20220607_195419825](https://github.com/BlackLair/projectnam_server/assets/80610197/79c8ba16-7344-4968-adae-e5d67f4065cd)
-![앱화면](https://github.com/BlackLair/projectnam_server/assets/80610197/ae204259-f260-46a2-8aac-4fb5c095473d)
 
 
 
