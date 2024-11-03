@@ -5,6 +5,8 @@
 
 ( 사용자용 앱 소스코드 : https://github.com/tmdngk0314/ProjectNam )
 
+API 명세서 : https://docs.google.com/spreadsheets/d/1XehM8v8K2ea6ACunzrdteiQ_V1du3IRD/edit?usp=sharing&ouid=109609985094903859420&rtpof=true&sd=true
+
 
 본 프로젝트는 2022년 성결대학교 졸업작품으로 제작되었습니다.
 
